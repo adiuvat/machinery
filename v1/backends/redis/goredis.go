@@ -3,7 +3,9 @@ package redis
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -44,10 +46,18 @@ func NewGR(cnf *config.Config, addrs []string, db int) iface.Backend {
 		addrs[0] = parts[len(parts)-1] // addr is the last one without @
 	}
 
+	var tlsConfig *tls.Config = nil
+	if os.Getenv("TLS") == "enable" {
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+	}
+
 	ropt := &redis.UniversalOptions{
-		Addrs:    addrs,
-		DB:       db,
-		Password: b.password,
+		Addrs:     addrs,
+		DB:        db,
+		Password:  b.password,
+		TLSConfig: tlsConfig,
 	}
 	if cnf.Redis != nil {
 		ropt.MasterName = cnf.Redis.MasterName
